@@ -68,7 +68,9 @@ async def find_vehicle(vehicle: Vehicle):
 
 @app.post("/calculate_trip")
 async def calculate_trip(trip: Trip):
-
+    # TODO could add option if car info used previously
+    # to save the mpg associated with that car, so
+    # no need to call the mpg api again
     async with httpx.AsyncClient() as client:
         mpg, gallon_cost = await asyncio.gather(
             get_mpg(client, trip.vehicleId),
@@ -95,8 +97,9 @@ async def get_mpg(client: httpx.AsyncClient, id: int):
 async def get_state_price(client: httpx.AsyncClient, state: str):
     params = {"state": state}
     state_url = "https://api.collectapi.com/gasPrice/stateUsaPrice"
+    api_key = os.getenv('API_KEY')
     headers = {
-        "authorization": # TODO,
+        "authorization": api_key,
         "content-type": "application/json"
     }
 
