@@ -12,7 +12,6 @@ function App() {
 
     // hide first form
     
-
     // submit user entered data to backend find_vehicle function
 
     // show returned vehicle options
@@ -49,7 +48,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Carpool Lane</h1>
-        
+
       </header>
     </div>
   );
