@@ -1,13 +1,28 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import asyncio
 import httpx
-import requests
 import os
 from dotenv import load_dotenv
 import xml.etree.ElementTree as ET
 
 app = FastAPI()
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 load_dotenv()
 
 @app.get("/")
@@ -44,17 +59,15 @@ class Trip(BaseModel):
     state: str
     vehicleId: int
     tripDistance: float
-    numPassengers: int
+    numPassengers: int = 1
 
 @app.post("/find_vehicle")
 async def find_vehicle(vehicle: Vehicle):
     params = vehicle.model_dump()
     api_url = "https://www.fueleconomy.gov/ws/rest/vehicle/menu/options"
-    
-    res = requests.get(api_url, params=params)
+    res = httpx.get(api_url, params=params)
     # TODO error handling
     # if(res.status_code != 200):
-
     root = ET.fromstring(res.content)
     car_options = []
     for car in root.findall('menuItem'):
@@ -68,9 +81,7 @@ async def find_vehicle(vehicle: Vehicle):
 
 @app.post("/calculate_trip")
 async def calculate_trip(trip: Trip):
-    # TODO could add option if car info used previously
-    # to save the mpg associated with that car, so
-    # no need to call the mpg api again
+    # TODO v2: cache MPG by vehicleId to avoid redundant API calls
     async with httpx.AsyncClient() as client:
         mpg, gallon_cost = await asyncio.gather(
             get_mpg(client, trip.vehicleId),
@@ -79,8 +90,9 @@ async def calculate_trip(trip: Trip):
     
     gallons_used = (trip.tripDistance)/mpg
     total_cost = gallons_used * gallon_cost
+    # error handling for division by zero
+    trip.numPassengers = 1 if trip.numPassengers < 1 else trip.numPassengers
     per_passenger_cost = total_cost / (trip.numPassengers)
-
     return {"total": total_cost, "per_passenger": per_passenger_cost}
 
     
