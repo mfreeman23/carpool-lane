@@ -3,21 +3,29 @@ import { useState } from 'react';
 
 function App() {
 
+  const baseURL = "http://localhost:8080";
+
   type Step = "vehicle_search" | "vehicle_select" | "trip_form" | "results";
+  type Car = {
+    name: string;
+    id: number;
+  }
   const [currentStep, setCurrentStep] = useState<Step>("vehicle_search");
+  const [vehicleOptions, setVehicleOptions] = useState<Car[]>([]);
 
-  
-
-  function handleFirstForm(){
+  async function handleVehicleSearch(){
 
     // hide first form
+    const url = baseURL + "/find_vehicle";
     
     // submit user entered data to backend find_vehicle function
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({ username: "example" }),
+    });
 
     // show returned vehicle options
-
     setCurrentStep("vehicle_select")
-
 
   }
 
@@ -32,17 +40,20 @@ function App() {
 
   }
 
-  function handleTripSubmission(){
+  async function handleTripSubmission(){
 
-    setCurrentStep("results")
+    setCurrentStep("results");
 
     // send trip info (including prev. selected vehicle id) to calculate_trip backend function
+     const url = baseURL + "/calculate_trip";
+     const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({ username: "example" }),
+    });
 
     // hide this form and display the calculated total price and per passenger prices
 
   }
-
-
 
   return (
     <div className="App">
